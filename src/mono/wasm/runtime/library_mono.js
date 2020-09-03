@@ -340,6 +340,7 @@ var MonoSupportLib = {
 		},
 
 		mono_wasm_add_lazy_load_files: function(lazy_loaded_files) {
+			console.log("here");
 			MONO.lazy_loaded_files = lazy_loaded_files;
 			debugger;
 		},

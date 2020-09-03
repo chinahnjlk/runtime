@@ -151,6 +151,7 @@ namespace Microsoft.WebAssembly.Diagnostics
 
         protected override async Task<bool> AcceptCommand(MessageId id, string method, JObject args, CancellationToken token)
         {
+            Console.WriteLine($"Received method {method}...");
             // Inspector doesn't use the Target domain or sessions
             // so we try to init immediately
             if (hideWebDriver && id == SessionId.Null)
@@ -504,22 +505,7 @@ namespace Microsoft.WebAssembly.Diagnostics
                     var res_val = loaded_assemblies.Value?["result"]?["value"];
                     var lazy_loaded_files = res_val?.ToObject<string[]>();
 
-                    await
-                    foreach (var source in context.store.Load(sessionId, lazy_loaded_files, token))
-                    {
-                        var scriptSource = JObject.FromObject(source.ToScriptSource(context.Id, context.AuxData));
-                        Log("verbose", $"Loading assembly from {source.Url} to context with ID {context.Id}.");
-
-                        SendEvent(sessionId, "Debugger.scriptParsed", scriptSource, token);
-
-                        foreach (var req in context.BreakpointRequests.Values)
-                        {
-                            if (req.TryResolve(source))
-                            {
-                                await SetBreakpoint(sessionId, context.store, req, true, token);
-                            }
-                        }
-                    }
+                    await LoadSourcesFromFiles(sessionId, lazy_loaded_files, token, context);
 
                     await SendCommand(sessionId, "Debugger.resume", new JObject(), token);
                     return true;
@@ -815,22 +801,7 @@ namespace Microsoft.WebAssembly.Diagnostics
                     loaded_files = loaded.Value?["result"]?["value"]?.ToObject<string[]>();
                 }
 
-                await
-                foreach (var source in context.store.Load(sessionId, loaded_files, token).WithCancellation(token))
-                {
-                    var scriptSource = JObject.FromObject(source.ToScriptSource(context.Id, context.AuxData));
-                    Log("verbose", $"\tsending {source.Url} {context.Id} {sessionId.sessionId}");
-
-                    SendEvent(sessionId, "Debugger.scriptParsed", scriptSource, token);
-
-                    foreach (var req in context.BreakpointRequests.Values)
-                    {
-                        if (req.TryResolve(source))
-                        {
-                            await SetBreakpoint(sessionId, context.store, req, true, token);
-                        }
-                    }
-                }
+                await LoadSourcesFromFiles(sessionId, loaded_files, token, context);
             }
             catch (Exception e)
             {
@@ -840,6 +811,26 @@ namespace Microsoft.WebAssembly.Diagnostics
             if (!context.Source.Task.IsCompleted)
                 context.Source.SetResult(context.store);
             return context.store;
+        }
+
+        async Task LoadSourcesFromFiles(SessionId sessionId, string[] loaded_files, CancellationToken token, ExecutionContext context)
+        {
+            await
+            foreach (var source in context.store.Load(sessionId, loaded_files, token).WithCancellation(token))
+            {
+                var scriptSource = JObject.FromObject(source.ToScriptSource(context.Id, context.AuxData));
+                Log("verbose", $"\tsending {source.Url} {context.Id} {sessionId.sessionId}");
+
+                SendEvent(sessionId, "Debugger.scriptParsed", scriptSource, token);
+
+                foreach (var req in context.BreakpointRequests.Values)
+                {
+                    if (req.TryResolve(source))
+                    {
+                        await SetBreakpoint(sessionId, context.store, req, true, token);
+                    }
+                }
+            }
         }
 
         async Task<DebugStore> RuntimeReady(SessionId sessionId, CancellationToken token)

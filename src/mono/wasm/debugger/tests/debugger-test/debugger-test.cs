@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Runtime.InteropServices;
 
 public partial class Math
 { //Only append content to this class as the test suite depends on line info
@@ -319,6 +320,11 @@ public class DebuggerTest
         ulong l_ulong = UInt64.MaxValue;
         locals_inner();
         return 0;
+    }
+
+    public static void lazy_load()
+    {
+        Runtime.InvokeJS("App.invoke_load_lazy_assembly()");
     }
 
     static void locals_inner() { }

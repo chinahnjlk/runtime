@@ -27,7 +27,7 @@
              Targets="Build;Publish"/>
   </Target>
 
-  <UsingTask TaskName="WasmAppBuilder" 
+  <UsingTask TaskName="WasmAppBuilder"
              AssemblyFile="$(ArtifactsBinDir)WasmAppBuilder\$(Configuration)\$(NetCoreAppCurrent)\publish\WasmAppBuilder.dll"/>
 
   <Target Name="BuildApp" DependsOnTargets="RebuildWasmAppBuilder;Build">
@@ -38,7 +38,7 @@
     <WasmAppBuilder
       AppDir="$(AppDir)"
       MicrosoftNetCoreAppRuntimePackDir="$(MicrosoftNetCoreAppRuntimePackDir)"
-      MainAssembly="$(ArtifactsBinDir)debugger-test/wasm/Debug/debugger-test.dll"
+      MainAssembly="$(ArtifactsBinDir)lazy-debugger-test/wasm/Debug/lazy-debugger-test.dll"
       MainJS="$(MonoProjectRoot)wasm\runtime-test.js"
       DebugLevel="1"
       AssemblySearchPaths="@(AssemblySearchPaths)"

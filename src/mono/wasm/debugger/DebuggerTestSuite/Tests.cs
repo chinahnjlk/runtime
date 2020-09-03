@@ -298,6 +298,43 @@ namespace DebuggerTests
 
         }
 
+        [Fact]
+        public async Task DebugLazyLoadedAssembly()
+        {
+            var insp = new Inspector();
+
+            //Collect events
+            var scripts = SubscribeToScripts(insp);
+
+            await Ready();
+
+            await insp.Ready(async (cli, token) =>
+           {
+               ctx = new DebugTestContext(cli, insp, token, scripts);
+
+               var eval_req = JObject.FromObject(new
+               {
+                   expression = "window.setTimeout(function() { invoke_add(); invoke_load_lazy_assembly(); }, 1);",
+               });
+
+               var eval_res = await cli.SendCommand("Runtime.evaluate", eval_req, token);
+               Assert.True(eval_res.IsOk);
+
+               await ctx.insp.WaitFor("Debugger.resume");
+
+               //    await CheckInspectLocalsAtBreakpointSite(
+               //     "dotnet://lazy-debugger-test.dll/lazy-debugger-test.cs", 11, 8, "IntAdd",
+               //     "window.setTimeout(function() { invoke_add(); }, 1);",
+               //     test_fn: (locals) =>
+               //     {
+               //         CheckNumber(locals, "a", 5);
+               //         CheckNumber(locals, "b", 10);
+               //         CheckNumber(locals, "c", 15);
+               //     }
+               // );
+           });
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -1482,7 +1519,7 @@ namespace DebuggerTests
 
                 AssertEqual("WriteLine", top_frame["functionName"]?.Value<string>(), "Expected to be in WriteLine method");
                 var script_id = top_frame["functionLocation"]["scriptId"].Value<string>();
-                Assert.Matches ("^dotnet://(mscorlib|System\\.Console)\\.dll/Console.cs", scripts[script_id]);
+                Assert.Matches("^dotnet://(mscorlib|System\\.Console)\\.dll/Console.cs", scripts[script_id]);
             });
         }
 
