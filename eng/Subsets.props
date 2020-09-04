@@ -194,6 +194,10 @@
   <ItemGroup Condition="$(_subset.Contains('+libs.src+'))">
     <ProjectToBuild Include="$(LibrariesProjectRoot)src.proj" Category="libs" />
   </ItemGroup>
+  
+  <ItemGroup Condition="$(_subset.Contains('+mono.wasmruntime+'))">
+    <ProjectToBuild Include="..." Category="mono" />
+  </ItemGroup>
 
   <ItemGroup Condition="$(_subset.Contains('+libs.pretest+'))">
     <ProjectToBuild Include="$(LibrariesProjectRoot)pretest.proj" Category="libs"  />
